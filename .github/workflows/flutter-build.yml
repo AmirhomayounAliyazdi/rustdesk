@@ -102,31 +102,24 @@ jobs:
       - name: Setup and Install vcpkg Dependencies
         shell: bash
         run: |
-          rm -rf "$VCPKG_ROOT"
-          
-          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
-          cd "$VCPKG_ROOT"
-          
-          # قفل کردن vcpkg روی نسخه‌ای که با پورت‌های پروژه سازگاری کامل دارد
-          git checkout 2023.10.19
+          rm -rf "C:/vcpkg"
+          git clone https://github.com/microsoft/vcpkg.git "C:/vcpkg"
+          cd "C:/vcpkg"
           ./bootstrap-vcpkg.bat
           
           cd "$GITHUB_WORKSPACE"
           
-          if ! "$VCPKG_ROOT/vcpkg" install --overlay-ports=res/vcpkg; then
-            echo "--------------------------------------------------------"
-            echo "!!! VCPKG BUILD FAILED !!!"
-            echo "--------------------------------------------------------"
-            find "$VCPKG_ROOT/buildtrees" -name "*-err.log" -exec cat {} \;
+          if [ -f "res/vcpkg/aom/portfile.cmake" ]; then
+            sed -i 's/OPTIONS/OPTIONS\n        -DAOM_TARGET_CPU=generic/g' res/vcpkg/aom/portfile.cmake
+          fi
+          
+          if ! "C:/vcpkg/vcpkg" install --overlay-ports=res/vcpkg; then
+            find "C:/vcpkg/buildtrees" -name "*-err.log" -exec cat {} \;
             exit 1
           fi
-
-      - name: Upload vcpkg build logs
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: vcpkg-build-logs
-          path: C:/vcpkg/buildtrees/**/*.log
+          
+          mkdir -p C:/vcpkg/installed
+          cp -r vcpkg_installed/* C:/vcpkg/installed/
 
       - name: Build HamrahDesk
         run: |
