@@ -104,19 +104,20 @@ jobs:
         run: |
           rm -rf "$VCPKG_ROOT"
           
-          # مسیر C:/vcpkg مشکل محدودیت طول مسیر (MAX_PATH) در ویندوز را برای aom و ninja برطرف می‌کند
           git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
-          
           cd "$VCPKG_ROOT"
+          
+          # قفل کردن vcpkg روی نسخه‌ای که با پورت‌های پروژه سازگاری کامل دارد
+          git checkout 2023.10.19
           ./bootstrap-vcpkg.bat
           
           cd "$GITHUB_WORKSPACE"
           
           if ! "$VCPKG_ROOT/vcpkg" install --overlay-ports=res/vcpkg; then
             echo "--------------------------------------------------------"
-            echo "!!! VCPKG BUILD FAILED - PRINTING ERRORS ONLY !!!"
+            echo "!!! VCPKG BUILD FAILED !!!"
             echo "--------------------------------------------------------"
-            find "$VCPKG_ROOT/buildtrees" -name "*-err.log" -exec echo "--- ERROR LOG: {} ---" \; -exec cat {} \;
+            find "$VCPKG_ROOT/buildtrees" -name "*-err.log" -exec cat {} \;
             exit 1
           fi
 
@@ -163,12 +164,9 @@ jobs:
       - name: Sign HamrahDesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
         shell: bash
-        env:
-          SECURE_BASE_URL: ${{ secrets.SIGN_BASE_URL }}
-          SECURE_SECRET_KEY: ${{ secrets.SIGN_SECRET_KEY }}
         run: |
           pip3 install requests argparse
-          BASE_URL=$SECURE_BASE_URL SECRET_KEY=$SECURE_SECRET_KEY python3 res/job.py sign_files ./HamrahDesk/
+          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./HamrahDesk/
 
       - name: Build self-extracted executable
         shell: bash
@@ -185,11 +183,8 @@ jobs:
       - name: Sign HamrahDesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
         shell: bash
-        env:
-          SECURE_BASE_URL: ${{ secrets.SIGN_BASE_URL }}
-          SECURE_SECRET_KEY: ${{ secrets.SIGN_SECRET_KEY }}
         run: |
-          BASE_URL=$SECURE_BASE_URL SECRET_KEY=$SECURE_SECRET_KEY python3 res/job.py sign_files ./SignOutput
+          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
