@@ -114,6 +114,12 @@ jobs:
           
           cd "$GITHUB_WORKSPACE"
           
+          # اعمال پچ خودکار روی پورت سفارشی aom برای نادیده گرفتن ارور NASM
+          if [ -f "res/vcpkg/aom/portfile.cmake" ]; then
+            sed -i 's/vcpkg_cmake_configure(/vcpkg_cmake_configure(\n    OPTIONS\n        -DENABLE_NASM=OFF/g' res/vcpkg/aom/portfile.cmake
+            sed -i 's/vcpkg_configure_cmake(/vcpkg_configure_cmake(\n    OPTIONS\n        -DENABLE_NASM=OFF/g' res/vcpkg/aom/portfile.cmake
+          fi
+          
           if ! "$VCPKG_ROOT/vcpkg" install --overlay-ports=res/vcpkg; then
             echo "--------------------------------------------------------"
             echo "!!! VCPKG BUILD FAILED - PRINTING ERRORS ONLY !!!"
