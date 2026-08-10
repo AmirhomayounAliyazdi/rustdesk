@@ -1,8 +1,3 @@
-# NASM is required to build AOM
-vcpkg_find_acquire_program(NASM)
-get_filename_component(NASM_EXE_PATH ${NASM} DIRECTORY)
-vcpkg_add_to_path(${NASM_EXE_PATH})
-
 # Perl is required to build AOM
 vcpkg_find_acquire_program(PERL)
 get_filename_component(PERL_PATH ${PERL} DIRECTORY)
@@ -15,20 +10,11 @@ vcpkg_from_git(
     PATCHES
         aom-uninitialized-pointer.diff
         aom-avx2.diff
-        # Can be dropped when https://bugs.chromium.org/p/aomedia/issues/detail?id=3029 is merged into the upstream
         aom-install.diff
 )
 
-set(aom_target_cpu "")
-if(VCPKG_TARGET_IS_UWP OR (VCPKG_TARGET_IS_WINDOWS AND VCPKG_TARGET_ARCHITECTURE MATCHES "^arm"))
-    # UWP + aom's assembler files result in weirdness and build failures
-    # Also, disable assembly on ARM and ARM64 Windows to fix compilation issues.
-    set(aom_target_cpu "-DAOM_TARGET_CPU=generic")
-endif()
-
-if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm" AND VCPKG_TARGET_IS_LINUX)
-  set(aom_target_cpu "-DENABLE_NEON=OFF")
-endif()
+# اجبار به استفاده از پردازنده جنریک برای نادیده گرفتن کامل اسمبلی و تست‌های NASM
+set(aom_target_cpu "-DAOM_TARGET_CPU=generic")
 
 vcpkg_cmake_configure(
     SOURCE_PATH ${SOURCE_PATH}
